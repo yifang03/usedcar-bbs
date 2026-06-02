@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  nickname  String
+  avatar    String?
+  role      String   @default("user") // user | admin
+  createdAt DateTime @default(now())
+
+  carListings CarListing[]
+  questions   Question[]
+  answers     Answer[]
+  articles    Article[]
+  comments    Comment[]
+  favorites   Favorite[]
+  likes       Like[]
+}
+
+model CarListing {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  title       String
+  brand       String
+  model       String
+  year        Int
+  mileage     Int
+  price       Float
+  city        String
+  description String   @default("")
+  images      String   @default("[]") // JSON array of URLs
+  status      String   @default("pending") // pending | approved | rejected
+  createdAt   DateTime @default(now())
+
+  user     User      @relation(fields: [userId], references: [id])
+}
+
+model Question {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  title       String
+  description String   @default("")
+  tags        String   @default("[]") // JSON array
+  createdAt   DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id])
+  answers  Answer[]
+}
+
+model Answer {
+  id          Int      @id @default(autoincrement())
+  questionId  Int
+  userId      Int
+  content     String
+  isAccepted  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  question Question @relation(fields: [questionId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
+}
+
+model Article {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  title       String
+  content     String
+  category    String   @default("") // 购车记 | 用车心得 | 整备案例 | 防坑指南
+  coverImage  String?
+  isFeatured  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id])
+}
+
+model Comment {
+  id         Int      @id @default(autoincrement())
+  targetType String   // car | question | article
+  targetId   Int
+  userId     Int
+  content    String
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Favorite {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  targetType String   // car | question | article
+  targetId   Int
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, targetType, targetId])
+}
+
+model Like {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  targetType String   // car | question | article
+  targetId   Int
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, targetType, targetId])
+}
