@@ -7,3 +7,6 @@ dev-*.log
 prisma/*.db
 prisma/*.db-journal
 public/uploads
+
+deploy/runtime
+deploy/*.zip
