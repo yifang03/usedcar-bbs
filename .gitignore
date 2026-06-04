@@ -4,5 +4,6 @@ node_modules
 *.log
 dev-*.log
 
-prisma/dev.db
+prisma/*.db
+prisma/*.db-journal
 public/uploads
