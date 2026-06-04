@@ -1,14 +1,31 @@
 # 一方二手车论坛部署说明
 
-## 推荐方案
+## 先说结论
 
-使用宝塔面板部署：
+如果服务器是 1 核 1G / 1 核 2G 的轻量云，不推荐在服务器上自动执行：
 
-- 运行方式：宝塔 Node 项目管理器
-- Node 版本：20 LTS 或 22 LTS
+```bash
+npm ci
+npm run build
+```
+
+这两个命令会吃内存和磁盘 IO，低配机器很容易卡死。这个项目正式运行仍然必须用生产模式：
+
+```bash
+npm run build
+npm run start
+```
+
+但构建动作要谨慎，最好在空闲时手动执行，或者以后迁移到 Vercel / GitHub Actions / 更高配置服务器构建。
+
+## 推荐上线方式
+
+- 面板：宝塔
+- 运行：宝塔 Node 项目管理器
+- Node 版本：20 LTS
 - 启动命令：`npm run start`
-- 项目端口：`3000`
-- 更新方式：执行 `deploy/update.sh` 后，在宝塔里重启 Node 项目
+- 端口：`3000`
+- 更新：先 `git pull`，确认服务器资源充足后再手动构建
 
 正式上线不要使用 `npm run dev`。
 
@@ -27,13 +44,13 @@ DATABASE_URL="file:./prod.db"
 JWT_SECRET="请换成一串足够长的随机密钥"
 ```
 
-安装、初始化数据库、构建：
+首次安装和构建建议在服务器空闲时执行：
 
 ```bash
-npm ci
+npm install --no-audit --no-fund
 npx prisma generate
 npx prisma db push
-npm run build
+NODE_OPTIONS="--max-old-space-size=1024" npm run build
 ```
 
 然后在宝塔 Node 项目管理器添加项目：
@@ -45,23 +62,23 @@ npm run build
 端口：3000
 ```
 
-启动后访问：
+启动后测试：
 
 ```bash
 curl http://127.0.0.1:3000
 ```
 
-能返回 HTML 就说明 Node 项目正常。
+返回 HTML 就说明 Node 项目正常。
 
 ## 宝塔网站反向代理
 
-在宝塔网站里创建站点，然后设置反向代理：
+宝塔网站设置反向代理：
 
 ```text
 目标 URL：http://127.0.0.1:3000
 ```
 
-如果上传图片，需要把请求体大小调大，比如 `20m`。
+上传图片建议把请求体大小调到 `20m`。
 
 ## 后续更新
 
@@ -73,20 +90,28 @@ git commit -m "更新"
 git push
 ```
 
-服务器执行：
+服务器只拉代码：
 
 ```bash
 bash /www/usedcar-bbs/deploy/update.sh
 ```
 
-然后去宝塔 Node 项目管理器重启 `yifang-used-car`。
+脚本默认只做版本判断和 `git pull`，不会自动安装依赖或构建，避免低配服务器被打满。
+
+如果确认服务器资源足够，并且需要构建：
+
+```bash
+bash /www/usedcar-bbs/deploy/update.sh --build
+```
+
+构建完成后，在宝塔 Node 项目管理器重启 `yifang-used-car`。
 
 ## 自动检测更新
 
-宝塔计划任务可以每 5 分钟执行：
+低配服务器不建议自动构建。可以让宝塔计划任务每 5 分钟只检测并拉代码：
 
 ```bash
 bash /www/usedcar-bbs/deploy/update.sh
 ```
 
-脚本会先判断 GitHub 有没有新提交；没有新版本就直接退出，不会重复构建。
+需要上线新版本时，再手动选择空闲时间执行构建和重启。
