@@ -58,11 +58,11 @@ export function useAuth() {
     return json;
   };
 
-  const register = async (email: string, password: string, nickname: string) => {
+  const register = async (email: string, password: string, nickname: string, verificationCode: string) => {
     const res = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ email, password, nickname }),
+      body: JSON.stringify({ email, password, nickname, verificationCode }),
     });
     const json = await res.json();
     if (json.ok) {

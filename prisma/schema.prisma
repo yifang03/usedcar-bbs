@@ -115,3 +115,15 @@ model Like {
 
   @@unique([userId, targetType, targetId])
 }
+
+model EmailVerificationCode {
+  id        Int       @id @default(autoincrement())
+  email     String
+  codeHash  String
+  purpose   String    @default("register")
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([email, purpose])
+}

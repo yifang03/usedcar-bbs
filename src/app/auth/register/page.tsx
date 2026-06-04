@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Button from "@/components/ui/Button";
@@ -13,8 +13,40 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [nickname, setNickname] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [sendingCode, setSendingCode] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+
+  useEffect(() => {
+    if (countdown <= 0) return;
+    const timer = window.setTimeout(() => setCountdown((prev) => prev - 1), 1000);
+    return () => window.clearTimeout(timer);
+  }, [countdown]);
+
+  const handleSendCode = async () => {
+    setError("");
+    if (!email.trim()) {
+      setError("请先填写邮箱");
+      return;
+    }
+
+    setSendingCode(true);
+    const res = await fetch("/api/auth/send-code", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ email, nickname }),
+    });
+    const json = await res.json();
+    setSendingCode(false);
+
+    if (json.ok) {
+      setCountdown(60);
+    } else {
+      setError(json.message || "验证码发送失败");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,8 +55,12 @@ export default function RegisterPage() {
       setError("密码至少6位");
       return;
     }
+    if (!verificationCode.trim()) {
+      setError("请输入邮箱验证码");
+      return;
+    }
     setLoading(true);
-    const res = await register(email, password, nickname);
+    const res = await register(email, password, nickname, verificationCode);
     setLoading(false);
 
     if (res.ok) {
@@ -53,6 +89,29 @@ export default function RegisterPage() {
           onChange={(e) => setEmail(e.target.value)}
           required
         />
+        <div>
+          <label className="block text-sm font-medium mb-1 text-text">邮箱验证码</label>
+          <div className="flex gap-2">
+            <Input
+              placeholder="6位验证码"
+              value={verificationCode}
+              onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              inputMode="numeric"
+              maxLength={6}
+              required
+            />
+            <Button
+              type="button"
+              variant="outline"
+              className="shrink-0"
+              disabled={sendingCode || countdown > 0}
+              loading={sendingCode}
+              onClick={handleSendCode}
+            >
+              {countdown > 0 ? `${countdown}s` : "发送验证码"}
+            </Button>
+          </div>
+        </div>
         <Input
           label="密码"
           type="password"

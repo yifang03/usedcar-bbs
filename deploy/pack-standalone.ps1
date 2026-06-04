@@ -39,6 +39,12 @@ if (Test-Path "prisma\dev.db") {
 @'
 DATABASE_URL="file:/www/usedcar-bbs-runtime/prod.db"
 JWT_SECRET="change-this-to-a-long-random-secret"
+SITE_NAME="一方二手车论坛"
+SMTP_HOST="smtp.qq.com"
+SMTP_PORT="465"
+SMTP_USER="your-email@qq.com"
+SMTP_PASS="your-smtp-auth-code"
+SMTP_FROM="一方二手车论坛 <your-email@qq.com>"
 PORT=3000
 HOSTNAME=0.0.0.0
 NODE_ENV=production
